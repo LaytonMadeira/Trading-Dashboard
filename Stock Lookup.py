@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import plotly.graph_objects as go
 
 st.write("## Welcome to the Trading Dashboard!")
 
@@ -32,11 +33,10 @@ if inp:
     plot_cols = ["Close"]
 
     if buy_signals:
-        plot_cols += "MA50"
-        plot_cols += "MA200"
-        
+        plot_cols += ["MA50", "MA200"]
+
     # data found
-    if not df.empty and buy_signals:
+    if not df.empty:
         st.line_chart(df[plot_cols])
 
 
