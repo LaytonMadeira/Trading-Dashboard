@@ -37,6 +37,55 @@ if inp:
 
     # data found
     if not df.empty:
-        st.line_chart(df[plot_cols])
+        # plot data
+        figure = go.Figure()
+
+        # Main Line (WHITE)
+        figure.add_trace(
+            go.Scatter(
+                x=df.index,
+                y=df["Close"],
+                mode="lines",
+                name="Price",
+                line=dict(color="white", width=2)
+            )
+        )
+
+        if buy_signals: 
+            # MA50 (RED)
+            figure.add_trace(
+                go.Scatter(
+                    x=df.index,
+                    y=df["MA50"],
+                    mode="lines",
+                    name="MA50 Price",
+                    line=dict(color="red", width=2)
+                )
+            )
+
+            # MA200 (BLUE)
+            figure.add_trace(
+                go.Scatter(
+                    x=df.index,
+                    y=df["MA200"],
+                    mode="lines",
+                    name="MA200 Price",
+                    line=dict(color="blue", width=2)
+                )
+            )
+
+        #Display graph
+        figure.update_layout(
+            title= f"{inp.upper()} Price Action",
+            xaxis_title="Date",
+            yaxis_title="Price (USD)",
+            # template="plotly_dark",
+            hovermode="x unified",
+            # height=600
+        )
+
+        st.plotly_chart(figure, use_container_width=True)
+
+        # st.line_chart(df[plot_cols])
 
 
