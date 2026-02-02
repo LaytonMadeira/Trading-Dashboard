@@ -3,37 +3,49 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 
+from styles import apply_css
+
+apply_css()
+
 st.write("## Welcome to the Trading Dashboard!")
 
 #get user input
 inp, timeframe = st.columns(2)
 with inp:
-    inp = st.text_input("Enter a ticker symbol below:", placeholder = "VOO, AAPL, SCHD, etc.", autocomplete="off")
+    inp = st.text_input("Enter a ticker symbol:", placeholder = "VOO, AAPL, SCHD, etc.", autocomplete="off")
 with timeframe:
-    timeframe = st.text_input("Enter the number of years to look back", placeholder = "1, 2, 3, etc. (integers)", autocomplete="off")
-
-df = None
+    timeframe = st.text_input("(Optional) Enter the period, in years, to examine:", placeholder = "1, 2, 3, etc. (integers)", autocomplete="off")   
 
 if inp:
     st.write(f"Symbol Entered: {inp.upper()}")
-    df = yf.download(f"{inp}", period=f"{1 if not timeframe else timeframe}y")
+    df = yf.download(f"{inp}", period=f"{1 if (not timeframe or not timeframe.isdigit()) else timeframe}y")
+    df.columns = df.columns.get_level_values(0) #flatten to remove multindex (not needed for single stock query)
+    stock = yf.Ticker(inp)
+    stock_name = stock.info.get('longName', 'Company Name Not Found')
 
-    df.columns = df.columns.get_level_values(0)
-
-    # display whether stock data was acquired
     st.write("\n")
-    st.write(f"Data aquisition status: {not df.empty}")
-    buy_signals = st.toggle("Buy Signals", help="Displays 50 day and 200 day moving averages")
+    
+    # Error check - incorrect ticker
+    if df.empty:
+        st.write(f"Error: Data not found for {inp.upper()}. Please double check ticker symbol and try again.")
+        st.stop()
+
+    buy_signals = st.toggle("Moving Averages", help="Displays 50 day and 200 day moving averages by default, helping investors find golden crosses.")
+    plot_cols = ["Close"]
 
     # calculate 50 day moving average and 200 day moving average and tell whether to buy or not 
     if buy_signals:
-        df["MA50"] = df["Close"].rolling(window=50).mean()
-        df["MA200"] = df["Close"].rolling(window=200).mean()
+        ma_one, ma_two = st.columns(2)
+        with ma_one:
+            ma_one = st.number_input("Moving Average One:", min_value=1, value=50)
+        with ma_two:
+            ma_two = st.number_input("Moving Average Two:", min_value=1, value=200)
 
-    plot_cols = ["Close"]
 
-    if buy_signals:
-        plot_cols += ["MA50", "MA200"]
+        df["MA_ONE"] = df["Close"].rolling(window=50 if not ma_one else ma_one).mean()
+        df["MA_TWO"] = df["Close"].rolling(window=200).mean()
+
+        plot_cols += ["MA_ONE", "MA_TWO"]
 
     # data found
     if not df.empty:
@@ -56,36 +68,37 @@ if inp:
             figure.add_trace(
                 go.Scatter(
                     x=df.index,
-                    y=df["MA50"],
+                    y=df["MA_ONE"],
                     mode="lines",
-                    name="MA50 Price",
+                    name="First MA",
                     line=dict(color="red", width=2)
                 )
             )
 
-            # MA200 (BLUE)
+            # MA_TWO (BLUE)
             figure.add_trace(
                 go.Scatter(
                     x=df.index,
-                    y=df["MA200"],
+                    y=df["MA_TWO"],
                     mode="lines",
-                    name="MA200 Price",
+                    name="Second MA",
                     line=dict(color="blue", width=2)
                 )
             )
 
         #Display graph
         figure.update_layout(
-            title= f"{inp.upper()} Price Action",
+            title={
+                'text': f'Price Action for {stock_name}',
+                'y': 0.9,
+                'x': 0.5,
+                'xanchor': 'center', 
+                'yanchor': 'top'
+                },
             xaxis_title="Date",
             yaxis_title="Price (USD)",
-            # template="plotly_dark",
             hovermode="x unified",
-            # height=600
         )
 
         st.plotly_chart(figure, use_container_width=True)
-
-        # st.line_chart(df[plot_cols])
-
 

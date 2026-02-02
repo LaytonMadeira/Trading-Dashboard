@@ -1,3 +1,5 @@
 /pages
 /virtualenv
+__pycache__/
+*.pyc
 test.py
