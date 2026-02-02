@@ -18,10 +18,16 @@ with timeframe:
 
 if inp:
     st.write(f"Symbol Entered: {inp.upper()}")
-    df = yf.download(f"{inp}", period=f"{1 if (not timeframe or not timeframe.isdigit()) else timeframe}y")
-    df.columns = df.columns.get_level_values(0) #flatten to remove multindex (not needed for single stock query)
-    stock = yf.Ticker(inp)
-    stock_name = stock.info.get('longName', 'Company Name Not Found')
+    try: 
+        df = yf.download(f"{inp}", period=f"{1 if (not timeframe or not timeframe.isdigit()) else timeframe}y")
+        df.columns = df.columns.get_level_values(0) #flatten to remove multindex (not needed for single stock query)
+        stock = yf.Ticker(inp)
+        stock_name = stock.info.get('longName', 'Company Name Not Found')
+
+    except:
+        st.write("Error fetching results, please check your connection and try again later.")
+        st.stop()
+
 
     st.write("\n")
     
