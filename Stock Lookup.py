@@ -35,7 +35,7 @@ def flatten_stock_data(stock_df):
     
     return stock_df
 
-st.write("## Welcome to the Trading Dashboard!")
+st.write("## Welcome to the Trading Dashboard!!")
 
 #get user input
 inp, timeframe = st.columns(2)
