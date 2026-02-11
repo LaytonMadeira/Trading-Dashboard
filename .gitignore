@@ -1,4 +1,3 @@
-/pages
 /virtualenv
 __pycache__/
 *.pyc
