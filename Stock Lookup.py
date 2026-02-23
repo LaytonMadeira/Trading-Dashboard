@@ -3,16 +3,29 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 
+from datetime import datetime, timedelta
+
+# alpaca
+from alpaca.data.historical import StockHistoricalDataClient
+from alpaca.trading.client import TradingClient
+from alpaca.data.requests import StockBarsRequest
+from alpaca.data.timeframe import TimeFrame
+
 # apply site-wide styles
 from styles import apply_css
 apply_css()
+
+client = StockHistoricalDataClient(
+    api_key=st.secrets["ALPACA_KEY"],
+    secret_key=st.secrets["ALPACA_SECRET"]
+)
 
 @st.cache_data(show_spinner=False)
 def get_stock_data(ticker, length, length_units='y'):
     try:
         # check length input 
-        if not length or not length.isdigit():
-            length = '1y'
+        if not length or not str(length).isdigit():
+            length = '365'
         else:
             length = f'{length}{length_units}'
         #download stock data
@@ -37,6 +50,7 @@ def flatten_stock_data(stock_df):
 
 st.write("## Welcome to the Trading Dashboard!!")
 
+st.write("hola")
 #get user input
 inp, timeframe = st.columns(2)
 with inp:
