@@ -3,24 +3,62 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 
+from datetime import datetime, timedelta
+
+# alpaca
+from alpaca.data.historical import StockHistoricalDataClient
+from alpaca.trading.client import TradingClient
+from alpaca.data.requests import StockBarsRequest
+from alpaca.data.timeframe import TimeFrame
+
 # apply site-wide styles
 from styles import apply_css
 apply_css()
+
+data_client = StockHistoricalDataClient(
+    api_key=st.secrets["ALPACA_KEY"],
+    secret_key=st.secrets["ALPACA_SECRET"]
+)
+
+trading_client = TradingClient(
+    st.secrets["ALPACA_KEY"], 
+    st.secrets["ALPACA_SECRET"], 
+    paper=True
+)
 
 @st.cache_data(show_spinner=False)
 def get_stock_data(ticker, length, length_units='y'):
     try:
         # check length input 
-        if not length or not length.isdigit():
-            length = '1y'
+        if not length or not str(length).isdigit():
+            days = 365
         else:
-            length = f'{length}{length_units}'
-        #download stock data
-        df = yf.download(ticker, period=length)
+            val = int(length)
+            days = val * 365
+
+        start_date = datetime.now() - timedelta(days=days) 
+        request_params = StockBarsRequest(
+            symbol_or_symbols=ticker.upper(),
+            timeframe=TimeFrame.Day,
+            start=start_date
+        )
+
+        bars = data_client.get_stock_bars(request_params)
+        df = bars.df
+
+        df = df.reset_index(level=0, drop=True) 
+        # df.rename(columns={'open': 'Open', 'high': 'High', 'low': 'Low', 'close': 'Close', 'volume': 'Volume'}, inplace=True)
         df.attrs = {}
-        #download company data
-        stock = yf.Ticker(ticker)
-        return df, stock.info
+        asset = trading_client.get_asset(ticker.upper())
+        # return fields needed
+        info = {
+            'longName': asset.name,
+            'shortName': asset.name,
+            'symbol': asset.symbol,
+            'exchange': asset.exchange,
+            'tradable': asset.tradable
+        }
+        return df, info
     except:
         return pd.DataFrame(), None
 
@@ -31,11 +69,10 @@ def get_stock_name(stock_info, ticker):
 def flatten_stock_data(stock_df):
     # flattens multindex for easier indexing of single stock query
     if isinstance(stock_df.columns, pd.MultiIndex):
-        stock_df.columns = df.columns.get_level_values(0)
-    
+        stock_df.columns = df.columns.get_level_values(0)    
     return stock_df
 
-st.write("## Welcome to the Trading Dashboard!!")
+st.write("## Welcome to the Trading Dashboard!")
 
 #get user input
 inp, timeframe = st.columns(2)
@@ -50,10 +87,11 @@ if inp:
         df, stock_info = get_stock_data(inp, timeframe, 'y')
         # need to flatten here
         df = flatten_stock_data(df)
-        stock_name = get_stock_name(stock_info, inp)
+        if stock_info:
+            stock_name = get_stock_name(stock_info, inp)
 
     # data was not found
-    if df.empty:
+    if df.empty or not stock_info:
         st.write(f"ERROR: Data not found for {inp}. Please check the ticker.")
         st.stop()
 
@@ -62,7 +100,7 @@ if inp:
         buy_signals = st.toggle(
             "Moving Averages", 
             help="Moving Averages help investors find Golden Crosses.")
-        plot_cols = ["Close"]
+        plot_cols = ["close"]
         # default moving averages
         ma_one_val = 50
         ma_two_val = 200
@@ -74,15 +112,15 @@ if inp:
             with ma_two_col:
                 ma_two_val = st.number_input("Second MA", min_value=1, value=200)
             #calc moving averages
-            df["Ma_One"] = df["Close"].rolling(window=ma_one_val).mean()
-            df["Ma_Two"] = df["Close"].rolling(window=ma_two_val).mean()
+            df["Ma_One"] = df["close"].rolling(window=ma_one_val).mean()
+            df["Ma_Two"] = df["close"].rolling(window=ma_two_val).mean()
             plot_cols+=["Ma_One", "Ma_Two"]
 
         figure = go.Figure()
 
         figure.add_trace(go.Scatter(
             x=df.index,
-            y=df["Close"],
+            y=df["close"],
             mode="lines",
             name="Price",
             line=dict(color='white', width=2)
