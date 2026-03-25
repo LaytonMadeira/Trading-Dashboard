@@ -10,6 +10,8 @@ from alpaca.trading.client import TradingClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
 
+from alpaca.data.enums import Adjustment
+
 # apply site-wide styles
 from styles import apply_css
 apply_css()
@@ -39,7 +41,10 @@ def get_stock_data(ticker, length, length_units='y'):
         request_params = StockBarsRequest(
             symbol_or_symbols=ticker.upper(),
             timeframe=TimeFrame.Day,
-            start=start_date
+            start=start_date,
+
+            # adjust prices
+            adjustment=Adjustment.ALL
         )
 
         bars = data_client.get_stock_bars(request_params)
