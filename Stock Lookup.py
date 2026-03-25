@@ -83,10 +83,10 @@ inp, timeframe = st.columns(2)
 with inp:
     inp = st.text_input("Enter a ticker symbol:", placeholder = "VOO, AAPL, SCHD, etc.", autocomplete="off")
 with timeframe:
-    timeframe = st.text_input("(Optional) Enter the period, in years, to examine:", placeholder = "1, 2, 3, etc. (integers)", autocomplete="off")   
+    timeframe = st.text_input("(Optional) Enter the period, in years, to examine:", placeholder = "1, 2, 3, etc. (integers)", autocomplete="off").strip()   
 
 if inp:
-    inp = inp.upper()
+    inp = inp.upper().strip()
     with st.spinner(f"Searching for {inp}..."):
         df, stock_info = get_stock_data(inp, timeframe, 'y')
         # need to flatten here
