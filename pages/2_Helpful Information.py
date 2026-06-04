@@ -24,10 +24,12 @@ st.write(f"""
          Optionally, the user can also specify the number of years. 
          This is an integer indicating how far to look back from the current day. 
          If unspecified, the number of years will default to 1.
-         \nFurthermore, the user may also display moving averages, allowing the user to locate golden crosses. 
+         \nFurthermore, the user may also display moving averages, allowing them to locate golden crosses. 
          Golden Crosses are one of the many indicators investors use to decide whether to buy or sell a stock.
          The most common moving averages used together are 50 and 200 day moving averages.
-         When the 50-day moving average is greater than the 200-day moving average , 
+         A Golden Cross occurs when the 50-day moving average crosses above the 200-day moving average, indicating positive momentum
+         and possibly a good buying opportunity. A Death Cross occurs when the 50-day moving average crosses below the 200 day moving average, 
+         indicating negative momentum and a possible shorting or selling opportunity.        
            """)
 
 st.write("### Errors")
