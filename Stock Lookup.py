@@ -14,7 +14,9 @@ from alpaca.data.enums import Adjustment
 
 # apply site-wide styles
 from styles import apply_css
-apply_css()
+current_theme = apply_css()
+
+
 
 data_client = StockHistoricalDataClient(
     api_key=st.secrets["ALPACA_KEY"],
@@ -73,7 +75,7 @@ def get_stock_name(stock_info, ticker):
 def flatten_stock_data(stock_df):
     # flattens multindex for easier indexing of single stock query
     if isinstance(stock_df.columns, pd.MultiIndex):
-        stock_df.columns = df.columns.get_level_values(0)    
+        stock_df.columns = stock_df.columns.get_level_values(0)    
     return stock_df
 
 st.write("## Welcome to the Trading Dashboard!")
@@ -121,13 +123,16 @@ if inp:
             plot_cols+=["Ma_One", "Ma_Two"]
 
         figure = go.Figure()
+        
+        theme = st.context.theme.type
+        main_line_color = 'white' if current_theme == "dark" else "black"
 
         figure.add_trace(go.Scatter(
             x=df.index,
             y=df["close"],
             mode="lines",
             name="Price",
-            line=dict(color='white', width=2)
+            line=dict(color=main_line_color, width=2)
         ) )
         
         if buy_signals:
